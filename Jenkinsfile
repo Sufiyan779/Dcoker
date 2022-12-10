@@ -1,11 +1,15 @@
 pipeline{
     agent {label 'OPENJDK-11'}
 
+    environment{
+        dockerhub=credentials('dockerhub')
+    }
+
     stages{
-        stage('cloning git repo into node'){
+        stage('pullig from svs'){
             steps{
-                sh 'git clone https://github.com/DevprojectsForDevOps/StudentCoursesRestAPI'
-                sh 'cd StudentCoursesRestAPI'    
+                git url:'https://github.com/DevprojectsForDevOps/StudentCoursesRestAPI',
+                branch: 'master'    
             }
         }
         stage('build image'){
@@ -15,9 +19,14 @@ pipeline{
         }
         stage('pushing image into docker hub '){
             steps{
-                sh 'docker tag mystudentapi:1.0 sufiyan/mystudentapi:1.0 '
-                sh 'docker login -u sfn411 -p sufiyankhan@786'
-                sh 'docker push sufiyan/mystudentapi:1.0'    
+                sh 'docker tag mystudentapi:1.0 sfn411/mystudentapi:1.0'
+                sh 'echo $dockerhub_PSW | docker login -u $dockerhub_USR --password-stdin'
+                sh 'docker push sfn411/mystudentapi:1.0'    
+            }
+        }
+        stage('create container'){
+            steps{
+                sh 'docker container run -d -p 5000:8080 mystudentapi:1.0'
             }
         }
     }
